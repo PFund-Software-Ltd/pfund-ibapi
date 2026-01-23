@@ -6,7 +6,7 @@
     <ProjectGuid>{cde8f229-c826-4fb6-ac32-ecf05a7fc489}</ProjectGuid>
     <ProjectHome />
     <StartupFile>Program.py</StartupFile>
-    <SearchPath>..\..\..\source\pythonclient;..\..\..\source\pythonclient\ibapi\protobuf</SearchPath>
+    <SearchPath>..\..\..\source\pythonclient</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
@@ -25,6 +25,7 @@
     <Compile Include="OrderSamples.py" />
     <Compile Include="Program.py" />
     <Compile Include="ScannerSubscriptionSamples.py" />
+    <Compile Include="sync_tester.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\pythonclient\ibapi\ibapi.pyproj">

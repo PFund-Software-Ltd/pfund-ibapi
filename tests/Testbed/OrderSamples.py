@@ -389,6 +389,7 @@ class OrderSamples:
         order.orderType = "LMT"
         order.totalQuantity = quantity
         order.lmtPrice = limitPrice
+        order.tif = "DAY"
         # ! [limitorder]
         return order
         
@@ -1250,6 +1251,17 @@ class OrderSamples:
         order.imbalanceOnly = True
         # ! [limit_on_close_order_with_imbalance_only]
         return order
+
+    @staticmethod
+    def LimitOrderWithStopLossAndProfitTaker(action:str, quantity:Decimal, limitPrice:float, slOrderId:int, ptOrderId:int):
+        # ! [limit_order_with_stop_loss_and_protif_taker]
+        order = OrderSamples.LimitOrder(action, quantity, limitPrice)
+        order.slOrderId = slOrderId
+        order.slOrderType = "PRESET"
+        order.ptOrderId = ptOrderId
+        order.ptOrderType = "PRESET"
+        # ! [limit_order_with_stop_loss_and_protif_taker]
+        return order;
 
 def Test():
     os = OrderSamples() # @UnusedVariable

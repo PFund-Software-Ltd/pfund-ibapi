@@ -751,6 +751,15 @@ class ContractSamples:
         # ! [optforecastxcontract]
         return contract
 
+    @staticmethod
+    def OptForecastxByConId():
+        # ! [optforecastxbyconid]
+        contract = Contract()
+        contract.conId = 789013783
+        contract.exchange = "FORECASTX"
+        # ! [optforecastxbyconid]
+        return contract
+
 def Test():
     from ibapi.utils import ExerciseStaticMethods
     ExerciseStaticMethods(ContractSamples)

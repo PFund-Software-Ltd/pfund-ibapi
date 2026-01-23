@@ -85,6 +85,41 @@ from ibapi.protobuf.HistoricalTicks_pb2 import HistoricalTicks as HistoricalTick
 from ibapi.protobuf.HistoricalTicksBidAsk_pb2 import HistoricalTicksBidAsk as HistoricalTicksBidAskProto
 from ibapi.protobuf.HistoricalTicksLast_pb2 import HistoricalTicksLast as HistoricalTicksLastProto
 from ibapi.protobuf.TickByTickData_pb2 import TickByTickData as TickByTickDataProto
+from ibapi.protobuf.NewsBulletin_pb2 import NewsBulletin as NewsBulletinProto
+from ibapi.protobuf.NewsArticle_pb2 import NewsArticle as NewsArticleProto
+from ibapi.protobuf.NewsProviders_pb2 import NewsProviders as NewsProvidersProto
+from ibapi.protobuf.HistoricalNews_pb2 import HistoricalNews as HistoricalNewsProto
+from ibapi.protobuf.HistoricalNewsEnd_pb2 import HistoricalNewsEnd as HistoricalNewsEndProto
+from ibapi.protobuf.WshMetaData_pb2 import WshMetaData as WshMetaDataProto
+from ibapi.protobuf.WshEventData_pb2 import WshEventData as WshEventDataProto
+from ibapi.protobuf.TickNews_pb2 import TickNews as TickNewsProto
+from ibapi.protobuf.ScannerParameters_pb2 import ScannerParameters as ScannerParametersProto
+from ibapi.protobuf.ScannerData_pb2 import ScannerData as ScannerDataProto
+from ibapi.protobuf.FundamentalsData_pb2 import FundamentalsData as FundamentalsDataProto
+from ibapi.protobuf.PnL_pb2 import PnL as PnLProto
+from ibapi.protobuf.PnLSingle_pb2 import PnLSingle as PnLSingleProto
+from ibapi.protobuf.ReceiveFA_pb2 import ReceiveFA as ReceiveFAProto
+from ibapi.protobuf.ReplaceFAEnd_pb2 import ReplaceFAEnd as ReplaceFAEndProto
+from ibapi.protobuf.CommissionAndFeesReport_pb2 import CommissionAndFeesReport as CommissionAndFeesReportProto
+from ibapi.protobuf.HistoricalSchedule_pb2 import HistoricalSchedule as HistoricalScheduleProto
+from ibapi.protobuf.RerouteMarketDataRequest_pb2 import RerouteMarketDataRequest as RerouteMarketDataRequestProto
+from ibapi.protobuf.RerouteMarketDepthRequest_pb2 import RerouteMarketDepthRequest as RerouteMarketDepthRequestProto
+from ibapi.protobuf.SecDefOptParameter_pb2 import SecDefOptParameter as SecDefOptParameterProto
+from ibapi.protobuf.SecDefOptParameterEnd_pb2 import SecDefOptParameterEnd as SecDefOptParameterEndProto
+from ibapi.protobuf.SoftDollarTiers_pb2 import SoftDollarTiers as SoftDollarTiersProto
+from ibapi.protobuf.FamilyCodes_pb2 import FamilyCodes as FamilyCodesProto
+from ibapi.protobuf.SymbolSamples_pb2 import SymbolSamples as SymbolSamplesProto
+from ibapi.protobuf.SmartComponents_pb2 import SmartComponents as SmartComponentsProto
+from ibapi.protobuf.MarketRule_pb2 import MarketRule as MarketRuleProto
+from ibapi.protobuf.UserInfo_pb2 import UserInfo as UserInfoProto
+from ibapi.protobuf.NextValidId_pb2 import NextValidId as NextValidIdProto
+from ibapi.protobuf.CurrentTime_pb2 import CurrentTime as CurrentTimeProto
+from ibapi.protobuf.CurrentTimeInMillis_pb2 import CurrentTimeInMillis as CurrentTimeInMillisProto
+from ibapi.protobuf.VerifyMessageApi_pb2 import VerifyMessageApi as VerifyMessageApiProto
+from ibapi.protobuf.VerifyCompleted_pb2 import VerifyCompleted as VerifyCompletedProto
+from ibapi.protobuf.DisplayGroupList_pb2 import DisplayGroupList as DisplayGroupListProto
+from ibapi.protobuf.DisplayGroupUpdated_pb2 import DisplayGroupUpdated as DisplayGroupUpdatedProto
+from ibapi.protobuf.MarketDepthExchanges_pb2 import MarketDepthExchanges as MarketDepthExchangesProto
 
 def SetupLogger():
     if not os.path.exists("log"):
@@ -315,7 +350,7 @@ class TestApp(TestWrapper, TestClient):
             #self.marketScannersOperations_req()
             #self.fundamentalsOperations_req()
             #self.bulletinsOperations_req()
-            #self.contractOperations()
+            #self.contractOperations_req()
             #self.newsOperations_req()
             #self.miscelaneousOperations()
             #self.linkingOperations()
@@ -326,7 +361,7 @@ class TestApp(TestWrapper, TestClient):
             #self.pnlOperations_req()
             #self.histogramOperations_req()
             #self.continuousFuturesOperations_req()
-            #self.historicalTicksOperations()
+            #self.historicalTicksOperations_req()
             #self.tickByTickOperations_req()
             #self.whatIfOrderOperations()
             #self.wshCalendarOperations()
@@ -362,6 +397,8 @@ class TestApp(TestWrapper, TestClient):
         #self.histogramOperations_cancel()
         #self.continuousFuturesOperations_cancel()
         #self.tickByTickOperations_cancel()
+        #self.contractOperations_cancel()
+        #self.historicalTicksOperations_cancel()
         print("Executing cancels ... finished")
 
     def nextOrderId(self):
@@ -400,7 +437,11 @@ class TestApp(TestWrapper, TestClient):
               "MidOffsetAtWhole:", floatMaxString(order.midOffsetAtWhole),"MidOffsetAtHalf:" ,floatMaxString(order.midOffsetAtHalf),
               "FAGroup:", order.faGroup, "FAMethod:", order.faMethod, "CustomerAccount:", order.customerAccount, "ProfessionalCustomer:", order.professionalCustomer, 
               "BondAccruedInterest:", order.bondAccruedInterest, "IncludeOvernight:", order.includeOvernight, "ExtOperator:", order.extOperator, 
-              "ManualOrderIndicator:", intMaxString(order.manualOrderIndicator), "Submitter:", order.submitter, "ImbalanceOnly:", order.imbalanceOnly, "AlgoStrategy:", order.algoStrategy)
+              "ManualOrderIndicator:", intMaxString(order.manualOrderIndicator), "Submitter:", order.submitter, "ImbalanceOnly:", order.imbalanceOnly, "AlgoStrategy:", order.algoStrategy,
+              "PostOnly:", order.postOnly, "AllowPreOpen:", order.allowPreOpen, "IgnoreOpenAuction:", order.ignoreOpenAuction, "Deactivate:", order.deactivate,
+              "ActiveStartTime:", order.activeStartTime, "ActiveStopTime:", order.activeStopTime, "SeekPriceImprovement:", ("True" if order.seekPriceImprovement else "False"),
+              "WhatIfType:", order.whatIfType, "RouteMarketableToBbo:", ("True" if order.routeMarketableToBbo else "False"))
+
         self.printTagValueList(order.algoParams, "AlgoParams")
         self.printComboLegs(contract.comboLegs)
         self.printOrderComboLegs(order.orderComboLegs)
@@ -1086,7 +1127,7 @@ class TestApp(TestWrapper, TestClient):
         # ! [cancelhistoricaldata]
 
     @printWhenExecuting
-    def historicalTicksOperations(self):
+    def historicalTicksOperations_req(self):
         # ! [reqhistoricalticks]
         self.reqHistoricalTicks(18001, ContractSamples.USStockAtSmart(),
                                 "20170712 21:39:33 US/Eastern", "", 10, "TRADES", 1, True, [])
@@ -1095,6 +1136,12 @@ class TestApp(TestWrapper, TestClient):
         self.reqHistoricalTicks(18003, ContractSamples.USStockAtSmart(),
                                 "20170712 21:39:33 US/Eastern", "", 10, "MIDPOINT", 1, True, [])
         # ! [reqhistoricalticks]
+
+    @printWhenExecuting
+    def historicalTicksOperations_cancel(self):
+        # ! [cancelHistoricalTicks]
+        self.cancelHistoricalTicks(18001)
+        # ! [cancelHistoricalTicks]
 
     @iswrapper
     # ! [headTimestamp]
@@ -1215,7 +1262,7 @@ class TestApp(TestWrapper, TestClient):
 
 
     @printWhenExecuting
-    def contractOperations(self):
+    def contractOperations_req(self):
         # ! [reqcontractdetails]
         self.reqContractDetails(210, ContractSamples.OptionForQuery())
         self.reqContractDetails(211, ContractSamples.EurGbpFx())
@@ -1229,12 +1276,19 @@ class TestApp(TestWrapper, TestClient):
         self.reqContractDetails(220, ContractSamples.USStock())
         self.reqContractDetails(221, ContractSamples.USStockAtSmart())
         self.reqContractDetails(220, ContractSamples.OptForecastx())
-        self.reqContractDetails(221, ContractSamples.OptForecastxZeroStrike());
+        self.reqContractDetails(221, ContractSamples.OptForecastxZeroStrike())
+        self.reqContractDetails(222, ContractSamples.OptForecastxByConId())
         # ! [reqcontractdetails]
 
         # ! [reqmatchingsymbols]
         self.reqMatchingSymbols(218, "IBM")
         # ! [reqmatchingsymbols]
+
+    @printWhenExecuting
+    def contractOperations_cancel(self):
+        # ! [cancelContractData]
+        self.cancelContractData(210)
+        # ! [cancelContractData]
 
     @printWhenExecuting
     def newsOperations_req(self):
@@ -1341,7 +1395,7 @@ class TestApp(TestWrapper, TestClient):
             for derivSecType in contractDescription.derivativeSecTypes:
                 derivSecTypes += " "
                 derivSecTypes += derivSecType
-            print("Contract: conId:%s, symbol:%s, secType:%s primExchange:%s, "
+            print("Contract: conId:%s, symbol:%s, secType:%s, primExchange:%s, "
                   "currency:%s, derivativeSecTypes:%s, description:%s, issuerId:%s" % (
                 contractDescription.contract.conId,
                 contractDescription.contract.symbol,
@@ -1407,7 +1461,7 @@ class TestApp(TestWrapper, TestClient):
 #              "Currency:", contractDetails.contract.currency,
 #              "Distance:", distance, "Benchmark:", benchmark,
 #              "Projection:", projection, "Legs String:", legsStr)
-        print("ScannerData. ReqId:", reqId, ScanData(contractDetails.contract, rank, distance, benchmark, projection, legsStr))
+        print("ScannerData. ReqId:", reqId, ScanData(contractDetails.contract, rank, distance, benchmark, projection, legsStr, contractDetails.marketName))
     # ! [scannerdata]
 
     @iswrapper
@@ -1421,9 +1475,9 @@ class TestApp(TestWrapper, TestClient):
     # ! [smartcomponents]
     def smartComponents(self, reqId:int, smartComponentMap:SmartComponentMap):
         super().smartComponents(reqId, smartComponentMap)
-        print("SmartComponents:")
-        for smartComponent in smartComponentMap:
-            print("SmartComponent.", smartComponent)
+        print(f"SmartComponents - ReqId: {reqId}")
+        for bitNumber, (exchange, exchangeLetter) in smartComponentMap.items():
+            print(f"  BitNumber: {bitNumber}, Exchange: '{exchange}', ExchangeLetter: '{exchangeLetter}'")
     # ! [smartcomponents]
 
     @iswrapper
@@ -1769,6 +1823,7 @@ class TestApp(TestWrapper, TestClient):
     # ! [whatiflimitorder]
         whatIfOrder = OrderSamples.LimitOrder("BUY", 100, 20)
         whatIfOrder.whatIf = True
+        whatIfOrder.tif = "DAY"
         self.placeOrder(self.nextOrderId(), ContractSamples.BondWithCusip(), whatIfOrder)
     # ! [whatiflimitorder]
         time.sleep(2)
@@ -2007,6 +2062,10 @@ class TestApp(TestWrapper, TestClient):
         # ! [zero_strike_opt_order]
         self.placeOrder(self.nextOrderId(), ContractSamples.OptForecastxZeroStrike(), OrderSamples.LimitOrder("BUY", Decimal("1"), 0.05));
         # ! [zero_strike_opt_order]
+
+        # ! [limit_order_with_stop_loss_and_profit_taker]
+        self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), OrderSamples.LimitOrderWithStopLossAndProfitTaker("BUY", Decimal("100"), 40, self.nextOrderId(), self.nextOrderId()));
+        # ! [limit_order_with_stop_loss_and_profit_taker]
 
     def orderOperations_cancel(self):
         if self.simplePlaceOid is not None:
@@ -2501,6 +2560,250 @@ class TestApp(TestWrapper, TestClient):
         print("TickByTickDatatProtoBuf")
     # ! [tickbytickdata_protobuf]
 
+    # ! [updatenewsbulletin_protobuf]
+    @iswrapper
+    def updateNewsBulletinProtoBuf(self, newsBulletinProto: NewsBulletinProto):
+        super().updateNewsBulletinProtoBuf(newsBulletinProto)
+        print("UpdateNewsBulletinProtoBuf")
+    # ! [updatenewsbulletin_protobuf]
+
+    # ! [newsarticle_protobuf]
+    @iswrapper
+    def newsArticleProtoBuf(self, newsArticleProto: NewsArticleProto):
+        super().newsArticleProtoBuf(newsArticleProto)
+        print("NewsArticleProtoBuf")
+    # ! [newsarticle_protobuf]
+
+    # ! [newsproviders_protobuf]
+    @iswrapper
+    def newsProvidersProtoBuf(self, newsProvidersProto: NewsProvidersProto):
+        super().newsProvidersProtoBuf(newsProvidersProto)
+        print("NewsProvidersProtoBuf")
+    # ! [newsproviders_protobuf]
+
+    # ! [historicalnews_protobuf]
+    @iswrapper
+    def historicalNewsProtoBuf(self, historicalNewsProto: HistoricalNewsProto):
+        super().historicalNewsProtoBuf(historicalNewsProto)
+        print("HistoricalNewsProtoBuf")
+    # ! [historicalnews_protobuf]
+
+    # ! [historicalnewsend_protobuf]
+    @iswrapper
+    def historicalNewsEndProtoBuf(self, historicalNewsEndProto: HistoricalNewsEndProto):
+        super().historicalNewsEndProtoBuf(historicalNewsEndProto)
+        print("HistoricalNewsEndProtoBuf")
+    # ! [historicalnewsend_protobuf]
+
+    # ! [wshmetadata_protobuf]
+    @iswrapper
+    def wshMetaDataProtoBuf(self, wshMetaDataProto: WshMetaDataProto):
+        super().wshMetaDataProtoBuf(wshMetaDataProto)
+        print("WshMetaDataProtoBuf")
+    # ! [wshmetadata_protobuf]
+
+    # ! [wsheventdata_protobuf]
+    @iswrapper
+    def wshEventDataProtoBuf(self, wshEventDataProto: WshEventDataProto):
+        super().wshEventDataProtoBuf(wshEventDataProto)
+        print("WshEventDataProtoBuf")
+    # ! [wsheventdata_protobuf]
+
+    # ! [ticknews_protobuf]
+    @iswrapper
+    def tickNewsProtoBuf(self, tickNewsProto: TickNewsProto):
+        super().tickNewsProtoBuf(tickNewsProto)
+        print("TickNewsProtoBuf")
+    # ! [ticknews_protobuf]
+
+    # ! [scannerparameters_protobuf]
+    @iswrapper
+    def scannerParametersProtoBuf(self, scannerParametersProto: ScannerParametersProto):
+        super().scannerParametersProtoBuf(scannerParametersProto)
+        print("ScannerParametersProtoBuf")
+    # ! [scannerparameters_protobuf]
+
+    # ! [scannerdata_protobuf]
+    @iswrapper
+    def scannerDataProtoBuf(self, scannerDataProto: ScannerDataProto):
+        super().scannerDataProtoBuf(scannerDataProto)
+        print("ScannerDataProtoBuf")
+    # ! [scannerdata_protobuf]
+
+    # ! [fundamentalsdata_protobuf]
+    @iswrapper
+    def fundamentalsDataProtoBuf(self, fundamentalsDataProto: FundamentalsDataProto):
+        super().fundamentalsDataProtoBuf(fundamentalsDataProto)
+        print("FundamentalsDataProtoBuf")
+    # ! [fundamentalsdata_protobuf]
+
+    # ! [pnl_protobuf]
+    @iswrapper
+    def pnlProtoBuf(self, pnlProto: PnLProto):
+        super().pnlProtoBuf(pnlProto)
+        print("PnLProtoBuf")
+    # ! [pnl_protobuf]
+
+    # ! [pnlsingle_protobuf]
+    @iswrapper
+    def pnlSingleProtoBuf(self, pnlSingleProto: PnLSingleProto):
+        super().pnlSingleProtoBuf(pnlSingleProto)
+        print("PnLSingleProtoBuf")
+    # ! [pnlsingle_protobuf]
+
+    # ! [receivefa_protobuf]
+    @iswrapper
+    def receiveFAProtoBuf(self, receiveFAProto: ReceiveFAProto):
+        super().receiveFAProtoBuf(receiveFAProto)
+        print("ReceiveFAProtoBuf")
+    # ! [receivefa_protobuf]
+
+    # ! [replacefaend_protobuf]
+    @iswrapper
+    def replaceFAEndProtoBuf(self, replaceFAEndProto: ReplaceFAEndProto):
+        super().replaceFAEndProtoBuf(replaceFAEndProto)
+        print("ReplaceFAEndProtoBuf")
+    # ! [replacefaend_protobuf]
+
+    # ! [commissionandfeesreport_protobuf]
+    @iswrapper
+    def commissionAndFeesReportProtoBuf(self, commissionAndFeesReportProto: CommissionAndFeesReportProto):
+        super().commissionAndFeesReportProtoBuf(commissionAndFeesReportProto)
+        print("CommissionAndFeesReportProtoBuf")
+    # ! [commissionandfeesreport_protobuf]
+
+    # ! [historicalschedule_protobuf]
+    @iswrapper
+    def historicalScheduleProtoBuf(self, historicalScheduleProto: HistoricalScheduleProto):
+        super().historicalScheduleProtoBuf(historicalScheduleProto)
+        print("HistoricalScheduleProtoBuf")
+    # ! [historicalschedule_protobuf]
+
+    # ! [reroutemarketdatarequest_protobuf]
+    @iswrapper
+    def rerouteMarketDataRequestProtoBuf(self, rerouteMarketDataRequestProto: RerouteMarketDataRequestProto):
+        super().rerouteMarketDataRequestProtoBuf(rerouteMarketDataRequestProto)
+        print("RerouteMarketDataRequestProtoBuf")
+    # ! [reroutemarketdatarequest_protobuf]
+
+    # ! [reroutemarketdepthrequest_protobuf]
+    @iswrapper
+    def rerouteMarketDepthRequestProtoBuf(self, rerouteMarketDepthRequestProto: RerouteMarketDepthRequestProto):
+        super().rerouteMarketDepthRequestProtoBuf(rerouteMarketDepthRequestProto)
+        print("RerouteMarketDepthRequestProtoBuf")
+    # ! [reroutemarketdepthrequest_protobuf]
+
+    # ! [secdefoptparameter_protobuf]
+    @iswrapper
+    def secDefOptParameterProtoBuf(self, secDefOptParameterProto: SecDefOptParameterProto):
+        super().secDefOptParameterProtoBuf(secDefOptParameterProto)
+        print("SecDefOptParameterProtoBuf")
+    # ! [secdefoptparameter_protobuf]
+
+    # ! [secdefoptparameterend_protobuf]
+    @iswrapper
+    def secDefOptParameterEndProtoBuf(self, secDefOptParameterEndProto: SecDefOptParameterEndProto):
+        super().secDefOptParameterEndProtoBuf(secDefOptParameterEndProto)
+        print("SecDefOptParameterEndProtoBuf")
+    # ! [secdefoptparameterend_protobuf]
+
+    # ! [softdollartiers_protobuf]
+    @iswrapper
+    def softDollarTiersProtoBuf(self, softDollarTiersProto: SoftDollarTiersProto):
+        super().softDollarTiersProtoBuf(softDollarTiersProto)
+        print("SoftDollarTiersProtoBuf")
+    # ! [softdollartiers_protobuf]
+
+    # ! [familycodes_protobuf]
+    @iswrapper
+    def familyCodesProtoBuf(self, familyCodesProto: FamilyCodesProto):
+        super().familyCodesProtoBuf(familyCodesProto)
+        print("FamilyCodesProtoBuf")
+    # ! [familycodes_protobuf]
+
+    # ! [symbolsamples_protobuf]
+    @iswrapper
+    def symbolSamplesProtoBuf(self, symbolSamplesProto: SymbolSamplesProto):
+        super().symbolSamplesProtoBuf(symbolSamplesProto)
+        print("SymbolSamplesProtoBuf")
+    # ! [symbolsamples_protobuf]
+
+    # ! [smartcomponents_protobuf]
+    @iswrapper
+    def smartComponentsProtoBuf(self, smartComponentsProto: SmartComponentsProto):
+        super().smartComponentsProtoBuf(smartComponentsProto)
+        print("SmartComponentsProtoBuf")
+    # ! [smartcomponents_protobuf]
+
+    # ! [marketrule_protobuf]
+    @iswrapper
+    def marketRuleProtoBuf(self, marketRuleProto: MarketRuleProto):
+        super().marketRuleProtoBuf(marketRuleProto)
+        print("MarketRuleProtoBuf")
+    # ! [marketrule_protobuf]
+
+    # ! [userinfo_protobuf]
+    @iswrapper
+    def userInfoProtoBuf(self, userInfoProto: UserInfoProto):
+        super().userInfoProtoBuf(userInfoProto)
+        print("UserInfoProtoBuf")
+    # ! [userinfo_protobuf]
+
+    # ! [nextvalidid_protobuf]
+    @iswrapper
+    def nextValidIdProtoBuf(self, nextValidIdProto: NextValidIdProto):
+        super().nextValidIdProtoBuf(nextValidIdProto)
+        print("NextValidIdProtoBuf")
+    # ! [nextvalidid_protobuf]
+
+    # ! [currenttime_protobuf]
+    @iswrapper
+    def currentTimeProtoBuf(self, currentTimeProto: CurrentTimeProto):
+        super().currentTimeProtoBuf(currentTimeProto)
+        print("CurrentTimeProtoBuf")
+    # ! [currenttime_protobuf]
+
+    # ! [currenttimeinmillis_protobuf]
+    @iswrapper
+    def currentTimeInMillisProtoBuf(self, currentTimeInMillisProto: CurrentTimeInMillisProto):
+        super().currentTimeInMillisProtoBuf(currentTimeInMillisProto)
+        print("CurrentTimeInMillisProtoBuf")
+    # ! [currenttimeinmillis_protobuf]
+
+    # ! [verifymessageapi_protobuf]
+    @iswrapper
+    def verifyMessageApiProtoBuf(self, verifyMessageApiProto: VerifyMessageApiProto):
+        super().verifyMessageApiProtoBuf(verifyMessageApiProto)
+        print("VerifyMessageApiProtoBuf")
+    # ! [verifymessageapi_protobuf]
+
+    # ! [verifycompleted_protobuf]
+    @iswrapper
+    def verifyCompletedProtoBuf(self, verifyCompletedProto: VerifyCompletedProto):
+        super().verifyCompletedProtoBuf(verifyCompletedProto)
+        print("VerifyCompletedProtoBuf")
+    # ! [verifycompleted_protobuf]
+
+    # ! [displaygrouplist_protobuf]
+    @iswrapper
+    def displayGroupListProtoBuf(self, displayGroupListProto: DisplayGroupListProto):
+        super().displayGroupListProtoBuf(displayGroupListProto)
+        print("DisplayGroupListProtoBuf")
+    # ! [displaygrouplist_protobuf]
+
+    # ! [displaygroupupdated_protobuf]
+    @iswrapper
+    def displayGroupUpdatedProtoBuf(self, displayGroupUpdatedProto: DisplayGroupUpdatedProto):
+        super().displayGroupUpdatedProtoBuf(displayGroupUpdatedProto)
+        print("DisplayGroupUpdatedProtoBuf")
+    # ! [displaygroupupdated_protobuf]
+
+    # ! [marketdepthexchanges_protobuf]
+    @iswrapper
+    def marketDepthExchangesProtoBuf(self, marketDepthExchangesProto: MarketDepthExchangesProto):
+        super().marketDepthExchangesProtoBuf(marketDepthExchangesProto)
+        print("MarketDepthExchangesProtoBuf")
+    # ! [marketdepthexchanges_protobuf]
 
 def main():
     SetupLogger()

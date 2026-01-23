@@ -15,7 +15,7 @@ from ibapi.ineligibility_reason import IneligibilityReason
 from ibapi.utils import floatMaxString, getEnumTypeFromString, decimalMaxString, isValidIntValue
 from ibapi.contract import FundDistributionPolicyIndicator
 from ibapi.contract import FundAssetType
-from ibapi.common import BarData, HistogramData, TickAttribBidAsk, TickAttribLast, HistoricalTick, HistoricalTickBidAsk, HistoricalTickLast
+from ibapi.common import BarData, HistogramData, TickAttribBidAsk, TickAttribLast, HistoricalTick, HistoricalTickBidAsk, HistoricalTickLast, FamilyCode, PriceIncrement, SmartComponent, SmartComponentMap, DepthMktDataDescription
 
 from ibapi.protobuf.Contract_pb2 import Contract as ContractProto
 from ibapi.protobuf.DeltaNeutralContract_pb2 import DeltaNeutralContract as DeltaNeutralContractProto
@@ -31,6 +31,11 @@ from ibapi.protobuf.HistoricalTickBidAsk_pb2 import HistoricalTickBidAsk as Hist
 from ibapi.protobuf.HistoricalTickLast_pb2 import HistoricalTickLast as HistoricalTickLastProto
 from ibapi.protobuf.HistogramDataEntry_pb2 import HistogramDataEntry as HistogramDataEntryProto
 from ibapi.protobuf.HistoricalDataBar_pb2 import HistoricalDataBar as HistoricalDataBarProto
+from ibapi.protobuf.FamilyCode_pb2 import FamilyCode as FamilyCodeProto
+from ibapi.protobuf.SmartComponents_pb2 import SmartComponents as SmartComponentsProto
+from ibapi.protobuf.SmartComponent_pb2 import SmartComponent as SmartComponentProto
+from ibapi.protobuf.PriceIncrement_pb2 import PriceIncrement as PriceIncrementProto
+from ibapi.protobuf.DepthMarketDataDescription_pb2 import DepthMarketDataDescription as DepthMarketDataDescriptionProto
 
 @staticmethod
 def decodeContract(contractProto: ContractProto) -> Contract:
@@ -55,7 +60,9 @@ def decodeContract(contractProto: ContractProto) -> Contract:
     if deltaNeutralContract is not None: contract.deltaNeutralContract = deltaNeutralContract
 
     if contractProto.HasField('lastTradeDate'): contract.lastTradeDate = contractProto.lastTradeDate
-    if contractProto.HasField('primaryExch'): contract.primaryExch = contractProto.primaryExch
+    if contractProto.HasField('primaryExch'): contract.primaryExchange = contractProto.primaryExch
+    if contractProto.HasField('issuerId'): contract.issuerId = contractProto.issuerId
+    if contractProto.HasField('description'): contract.description = contractProto.description
 
     return contract
 
@@ -136,7 +143,7 @@ def decodeOrder(orderId: int, contractProto: ContractProto, orderProto: OrderPro
     if isValidIntValue(orderId): order.orderId = orderId
     if orderProto.HasField('orderId'): order.orderId = orderProto.orderId
     if orderProto.HasField('action'): order.action = orderProto.action
-    if orderProto.HasField('totalQuantity'): order.totalQuantity = orderProto.totalQuantity
+    if orderProto.HasField('totalQuantity'): order.totalQuantity = Decimal(orderProto.totalQuantity)
     if orderProto.HasField('orderType'): order.orderType = orderProto.orderType
     if orderProto.HasField('lmtPrice'): order.lmtPrice = orderProto.lmtPrice
     if orderProto.HasField('auxPrice'): order.auxPrice = orderProto.auxPrice
@@ -242,7 +249,7 @@ def decodeOrder(orderId: int, contractProto: ContractProto, orderProto: OrderPro
     if orderProto.HasField('adjustedTrailingAmount'): order.adjustedTrailingAmount = orderProto.adjustedTrailingAmount
     if orderProto.HasField('adjustableTrailingUnit'): order.adjustableTrailingUnit = orderProto.adjustableTrailingUnit
 
-    softDollarTier = decodeSoftDollarTier(orderProto)
+    softDollarTier = decodeSoftDollarTierFromOrder(orderProto)
     if softDollarTier is not None: order.softDollarTier = softDollarTier
 
     if orderProto.HasField('cashQty'): order.cashQty = orderProto.cashQty
@@ -272,6 +279,14 @@ def decodeOrder(orderId: int, contractProto: ContractProto, orderProto: OrderPro
     if orderProto.HasField('shareholder'): order.shareholder = orderProto.shareholder
     if orderProto.HasField('routeMarketableToBbo'): order.routeMarketableToBbo = orderProto.routeMarketableToBbo
     if orderProto.HasField('parentPermId'): order.parentPermId = orderProto.parentPermId
+    if orderProto.HasField('postOnly'): order.postOnly = orderProto.postOnly
+    if orderProto.HasField('allowPreOpen'): order.allowPreOpen = orderProto.allowPreOpen
+    if orderProto.HasField('ignoreOpenAuction'): order.ignoreOpenAuction = orderProto.ignoreOpenAuction
+    if orderProto.HasField('deactivate'): order.deactivate = orderProto.deactivate
+    if orderProto.HasField('activeStartTime'): order.activeStartTime = orderProto.activeStartTime
+    if orderProto.HasField('activeStopTime'): order.activeStopTime = orderProto.activeStopTime
+    if orderProto.HasField('seekPriceImprovement'): order.seekPriceImprovement = orderProto.seekPriceImprovement
+    if orderProto.HasField('whatIfType'): order.whatIfType = orderProto.whatIfType
 
     return order
 
@@ -362,16 +377,22 @@ def createPercentChangeCondition(orderConditionProto: OrderConditionProto) -> Pe
     return percentChangeCondition
 
 @staticmethod
-def decodeSoftDollarTier(orderProto: OrderProto) -> SoftDollarTier:
+def decodeSoftDollarTierFromOrder(orderProto: OrderProto) -> SoftDollarTier:
+    softDollarTierProto = None
+    if orderProto.softDollarTier is not None: softDollarTierProto = orderProto.softDollarTier
+    return decodeSoftDollarTier(softDollarTierProto) if softDollarTierProto is not None else None
+
+@staticmethod
+def decodeSoftDollarTier(softDollarTierProto: SoftDollarTierProto) -> SoftDollarTier:
     name = ""
     value = ""
     displayName = ""
-    softDollarTierProto = SoftDollarTierProto()
-    if orderProto.softDollarTier is not None: softDollarTierProto = orderProto.softDollarTier
-    if softDollarTierProto.HasField('name'): name = softDollarTierProto.name
-    if softDollarTierProto.HasField('value'): value = softDollarTierProto.value
-    if softDollarTierProto.HasField('displayName'): displayName = softDollarTierProto.displayName
-    softDollarTier = SoftDollarTier(name, value, displayName)
+    softDollarTier = None
+    if softDollarTierProto is not None: 
+        if softDollarTierProto.HasField('name'): name = softDollarTierProto.name
+        if softDollarTierProto.HasField('value'): value = softDollarTierProto.value
+        if softDollarTierProto.HasField('displayName'): displayName = softDollarTierProto.displayName
+        softDollarTier = SoftDollarTier(name, value, displayName)
 
     return softDollarTier
 
@@ -477,6 +498,7 @@ def decodeContractDetails(contractProto: ContractProto, contractDetailsProto: Co
     if contractDetailsProto.HasField('minSize'): contractDetails.minSize = Decimal(contractDetailsProto.minSize)
     if contractDetailsProto.HasField('sizeIncrement'): contractDetails.sizeIncrement = Decimal(contractDetailsProto.sizeIncrement)
     if contractDetailsProto.HasField('suggestedSizeIncrement'): contractDetails.suggestedSizeIncrement = Decimal(contractDetailsProto.suggestedSizeIncrement)
+    if contractDetailsProto.HasField('minAlgoSize'): contractDetails.minAlgoSize = Decimal(contractDetailsProto.minAlgoSize)
 
     setLastTradeDate(contract.lastTradeDateOrContractMonth, contractDetails, isBond);
 
@@ -516,6 +538,10 @@ def decodeContractDetails(contractProto: ContractProto, contractDetailsProto: Co
 
     ineligibilityReasonList = decodeIneligibilityReasonList(contractDetailsProto)
     if ineligibilityReasonList is not None and ineligibilityReasonList: contractDetails.ineligibilityReasonList = ineligibilityReasonList
+
+    if contractDetailsProto.HasField('eventContract1'): contractDetails.eventContract1 = contractDetailsProto.eventContract1
+    if contractDetailsProto.HasField('eventContractDescription1'): contractDetails.eventContractDescription1 = contractDetailsProto.eventContractDescription1
+    if contractDetailsProto.HasField('eventContractDescription2'): contractDetails.eventContractDescription2 = contractDetailsProto.eventContractDescription2
 
     return contractDetails
 
@@ -614,3 +640,38 @@ def decodeHistoricalDataBar(historicalDataBarProto: HistoricalDataBarProto) -> B
     if historicalDataBarProto.HasField('WAP'): bar.wap = Decimal(historicalDataBarProto.WAP)
     if historicalDataBarProto.HasField('barCount'): bar.barCount = historicalDataBarProto.barCount
     return bar
+
+@staticmethod
+def decodeFamilyCode(familyCodeProto: FamilyCodeProto) -> FamilyCode:
+    familyCode = FamilyCode()
+    if familyCodeProto and familyCodeProto.HasField('accountId'): familyCode.accountID = familyCodeProto.accountId
+    if familyCodeProto and familyCodeProto.HasField('familyCode'): familyCode.familyCodeStr = familyCodeProto.familyCode
+    return familyCode
+
+@staticmethod
+def decodeSmartComponents(smartComponentsProto: SmartComponentsProto) -> SmartComponentMap:
+    smartComponentMap = {}
+    if smartComponentsProto and smartComponentsProto.smartComponents:
+        for smartComponentProto in smartComponentsProto.smartComponents:
+            bitNumber = smartComponentProto.bitNumber if smartComponentProto.HasField('bitNumber') else 0
+            exchange = smartComponentProto.exchange if smartComponentProto.HasField('exchange') else ""
+            exchangeLetter = smartComponentProto.exchangeLetter if smartComponentProto.HasField('exchangeLetter') else " "
+            smartComponentMap[bitNumber] = (exchange, exchangeLetter)
+    return smartComponentMap
+
+@staticmethod
+def decodePriceIncrement(priceIncrementProto: PriceIncrementProto) -> PriceIncrement:
+    priceIncrement = PriceIncrement()
+    if priceIncrementProto and priceIncrementProto.HasField('lowEdge'): priceIncrement.lowEdge = priceIncrementProto.lowEdge
+    if priceIncrementProto and priceIncrementProto.HasField('increment'): priceIncrement.increment = priceIncrementProto.increment
+    return priceIncrement
+
+@staticmethod
+def decodeDepthMarketDataDescription(depthMarketDataDescriptionProto: DepthMarketDataDescriptionProto) -> DepthMktDataDescription:
+    description = DepthMktDataDescription()
+    if depthMarketDataDescriptionProto.HasField('exchange'): description.exchange = depthMarketDataDescriptionProto.exchange
+    if depthMarketDataDescriptionProto.HasField('secType'): description.secType = depthMarketDataDescriptionProto.secType
+    if depthMarketDataDescriptionProto.HasField('listingExch'): description.listingExch = depthMarketDataDescriptionProto.listingExch
+    if depthMarketDataDescriptionProto.HasField('serviceDataType'): description.serviceDataType = depthMarketDataDescriptionProto.serviceDataType
+    if depthMarketDataDescriptionProto.HasField('aggGroup'): description.aggGroup = depthMarketDataDescriptionProto.aggGroup
+    return description

@@ -22,11 +22,11 @@ class CodeMsgPair:
 ALREADY_CONNECTED = CodeMsgPair(501, "Already connected.")
 CONNECT_FAIL = CodeMsgPair(
     502,
-    """Couldn't connect to TWS. Confirm that \"Enable ActiveX and Socket EClients\" 
+    """Couldn't connect to TWS. Confirm that \"Enable ActiveX and Socket Clients\" 
 is enabled and connection port is the same as \"Socket Port\" on the 
 TWS \"Edit->Global Configuration...->API->Settings\" menu. Live Trading ports: 
-TWS: 7496; IB Gateway: 4001. Simulated Trading ports for new installations 
-of version 954.1 or newer:  TWS: 7497; IB Gateway: 4002""",
+TWS: 7496; IB Gateway: 4001. Simulated Trading ports: TWS: 7497; IB Gateway: 4002.
+Verify that the maximum API connection threshold (default 32) is not exceeded.""",
 )
 UPDATE_TWS = CodeMsgPair(503, "The TWS is out of date and must be upgraded.")
 NOT_CONNECTED = CodeMsgPair(504, "Not connected")
@@ -113,3 +113,5 @@ FA_PROFILE_NOT_SUPPORTED = CodeMsgPair(585, "FA Profile is not supported anymore
 FAIL_SEND_REQCURRTIMEINMILLIS = CodeMsgPair(587, "Request Current Time In Millis Sending Error - ")
 ERROR_ENCODING_PROTOBUF = CodeMsgPair(588, "Error encoding protobuf - ")
 FAIL_SEND_CANMKTDEPTH = CodeMsgPair(589, "Cancel Market Depth Sending Error - ")
+FAIL_SEND_CANCEL_CONTRACT_DATA = CodeMsgPair(590, "Cancel Contract Data Sending Error - ")
+FAIL_SEND_CANCEL_HISTORICAL_TICKS = CodeMsgPair(591, "Cancel Historical Ticks Sending Error - ")
