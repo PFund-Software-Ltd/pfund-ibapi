@@ -21,8 +21,12 @@
   <ItemGroup>
     <Compile Include="AvailableAlgoParams.py" />
     <Compile Include="ContractSamples.py" />
+    <Compile Include="NewsSamplesProto.py" />
+    <Compile Include="ContractSamplesProto.py" />
     <Compile Include="FaAllocationSamples.py" />
+    <Compile Include="ConfigSamples.py" />
     <Compile Include="OrderSamples.py" />
+    <Compile Include="OrderSamplesProto.py" />
     <Compile Include="Program.py" />
     <Compile Include="ScannerSubscriptionSamples.py" />
     <Compile Include="sync_tester.py" />

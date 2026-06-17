@@ -1,5 +1,5 @@
 """
-Copyright (C) 2024 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
+Copyright (C) 2026 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
  and conditions of the IB API Non-Commercial License or the IB API Commercial License, as applicable.
 """
 
@@ -179,8 +179,8 @@ class ContractSamples:
         contract.secType = "OPT"
         contract.exchange = "SMART"
         contract.currency = "USD"
-        contract.lastTradeDateOrContractMonth = "20190315"
-        contract.strike = 1180
+        contract.lastTradeDateOrContractMonth = "20271217"
+        contract.strike = 340
         contract.right = "C"
         contract.multiplier = "100"
         #! [optcontract_us]
@@ -597,28 +597,6 @@ class ContractSamples:
         return contract
 
     @staticmethod
-    def JefferiesContract():
-        #! [jefferies_contract]
-        contract = Contract()
-        contract.symbol = "AAPL"
-        contract.secType = "STK"
-        contract.exchange = "JEFFALGO"
-        contract.currency = "USD"
-        #! [jefferies_contract]
-        return contract
-
-    @staticmethod
-    def CSFBContract():
-        #! [csfb_contract]
-        contract = Contract()
-        contract.symbol = "IBKR"
-        contract.secType = "STK"
-        contract.exchange = "CSFBALGO"
-        contract.currency = "USD"
-        #! [csfb_contract]
-        return contract
-
-    @staticmethod
     def USStockCFD():
         # ! [usstockcfd_conract]
         contract = Contract()
@@ -649,18 +627,6 @@ class ContractSamples:
         contract.currency = "USD"
         contract.exchange = "SMART"
         # ! [cashcfd_contract]
-        return contract
-
-    @staticmethod
-    def QBAlgoContract():
-        # ! [qbalgo_contract]
-        contract = Contract()
-        contract.symbol = "ES"
-        contract.secType = "FUT"
-        contract.exchange = "QBALGO"
-        contract.currency = "USD"
-        contract.lastTradeDateOrContractMonth = "202003"
-        # ! [qbalgo_contract]
         return contract
 
     @staticmethod

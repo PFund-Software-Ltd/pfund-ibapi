@@ -1,5 +1,5 @@
 """
-Copyright (C) 2025 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
+Copyright (C) 2026 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
  and conditions of the IB API Non-Commercial License or the IB API Commercial License, as applicable.
 """
 
@@ -14,7 +14,7 @@ import os.path
 
 from ibapi import wrapper
 from ibapi.client import EClient
-from ibapi.utils import getTimeStrFromMillis, longMaxString, decimalMaxString, getEnumTypeName
+from ibapi.utils import getTimeStrFromMillis, longMaxString, decimalMaxString, getEnumTypeName, printProtoSingleLine
 from ibapi.utils import iswrapper
 
 # types
@@ -31,6 +31,7 @@ from ibapi.tag_value import TagValue
 
 from ibapi.account_summary_tags import *
 
+from ConfigSamples import ConfigSamples
 from ContractSamples import ContractSamples
 from OrderSamples import OrderSamples
 from AvailableAlgoParams import AvailableAlgoParams
@@ -38,6 +39,10 @@ from ScannerSubscriptionSamples import ScannerSubscriptionSamples
 from FaAllocationSamples import FaAllocationSamples
 from ibapi.scanner import ScanData
 from decimal import Decimal
+from ContractSamplesProto import ContractSamplesProto
+from OrderSamplesProto import OrderSamplesProto
+from NewsSamplesProto import NewsSamplesProto
+from MarketDataSamplesProto import MarketDataSamplesProto
 
 from ibapi.protobuf.OrderStatus_pb2 import OrderStatus as OrderStatusProto
 from ibapi.protobuf.OpenOrder_pb2 import OpenOrder as OpenOrderProto
@@ -95,7 +100,6 @@ from ibapi.protobuf.WshEventData_pb2 import WshEventData as WshEventDataProto
 from ibapi.protobuf.TickNews_pb2 import TickNews as TickNewsProto
 from ibapi.protobuf.ScannerParameters_pb2 import ScannerParameters as ScannerParametersProto
 from ibapi.protobuf.ScannerData_pb2 import ScannerData as ScannerDataProto
-from ibapi.protobuf.FundamentalsData_pb2 import FundamentalsData as FundamentalsDataProto
 from ibapi.protobuf.PnL_pb2 import PnL as PnLProto
 from ibapi.protobuf.PnLSingle_pb2 import PnLSingle as PnLSingleProto
 from ibapi.protobuf.ReceiveFA_pb2 import ReceiveFA as ReceiveFAProto
@@ -120,6 +124,9 @@ from ibapi.protobuf.VerifyCompleted_pb2 import VerifyCompleted as VerifyComplete
 from ibapi.protobuf.DisplayGroupList_pb2 import DisplayGroupList as DisplayGroupListProto
 from ibapi.protobuf.DisplayGroupUpdated_pb2 import DisplayGroupUpdated as DisplayGroupUpdatedProto
 from ibapi.protobuf.MarketDepthExchanges_pb2 import MarketDepthExchanges as MarketDepthExchangesProto
+from ibapi.protobuf.ConfigRequest_pb2 import ConfigRequest as ConfigRequestProto
+from ibapi.protobuf.ConfigResponse_pb2 import ConfigResponse as ConfigResponseProto
+from ibapi.protobuf.UpdateConfigResponse_pb2 import UpdateConfigResponse as UpdateConfigResponseProto
 
 def SetupLogger():
     if not os.path.exists("log"):
@@ -348,14 +355,13 @@ class TestApp(TestWrapper, TestClient):
             #self.historicalDataOperations_req()
             #self.optionsOperations_req()
             #self.marketScannersOperations_req()
-            #self.fundamentalsOperations_req()
             #self.bulletinsOperations_req()
             #self.contractOperations_req()
             #self.newsOperations_req()
             #self.miscelaneousOperations()
             #self.linkingOperations()
             #self.financialAdvisorOperations()
-            self.orderOperations_req()
+            #self.orderOperations_req()
             #self.rerouteCFDOperations()
             #self.marketRuleOperations()
             #self.pnlOperations_req()
@@ -365,10 +371,13 @@ class TestApp(TestWrapper, TestClient):
             #self.tickByTickOperations_req()
             #self.whatIfOrderOperations()
             #self.wshCalendarOperations()
-            #self.algoSamples()
+            self.algoSamples()
             #self.conditionSamples()
+            #self.configOperations_req()
+            #self.orderParentChildOperations_req()
+            #self.newsOperationsProto_req()
+            #self.tickDataOperationsProto_req()
 
-            
             print("Executing requests ... finished")
 
     def keyboardInterrupt(self):
@@ -390,7 +399,6 @@ class TestApp(TestWrapper, TestClient):
         #self.historicalDataOperations_cancel()
         #self.optionsOperations_cancel()
         #self.marketScanners_cancel()
-        #self.fundamentalsOperations_cancel()
         #self.bulletinsOperations_cancel()
         #self.newsOperations_cancel()
         #self.pnlOperations_cancel()
@@ -424,46 +432,14 @@ class TestApp(TestWrapper, TestClient):
 
     @iswrapper
     # ! [openorder]
-    def openOrder(self, orderId: OrderId, contract: Contract, order: Order,
-                  orderState: OrderState):
+    def openOrder(self, orderId: OrderId, contract: Contract, order: Order, orderState: OrderState):
         super().openOrder(orderId, contract, order, orderState)
-        print("OpenOrder. PermId:", longMaxString(order.permId), "ClientId:", intMaxString(order.clientId), " OrderId:", intMaxString(orderId), 
-              "Account:", order.account, "Symbol:", contract.symbol, "SecType:", contract.secType, "Strike:", floatMaxString(contract.strike),
-              "Exchange:", contract.exchange, "Action:", order.action, "OrderType:", order.orderType,
-              "TotalQty:", decimalMaxString(order.totalQuantity), "CashQty:", floatMaxString(order.cashQty), 
-              "LmtPrice:", floatMaxString(order.lmtPrice), "AuxPrice:", floatMaxString(order.auxPrice), "Status:", orderState.status,
-              "MinTradeQty:", intMaxString(order.minTradeQty), "MinCompeteSize:", intMaxString(order.minCompeteSize),
-              "competeAgainstBestOffset:", "UpToMid" if order.competeAgainstBestOffset == COMPETE_AGAINST_BEST_OFFSET_UP_TO_MID else floatMaxString(order.competeAgainstBestOffset),
-              "MidOffsetAtWhole:", floatMaxString(order.midOffsetAtWhole),"MidOffsetAtHalf:" ,floatMaxString(order.midOffsetAtHalf),
-              "FAGroup:", order.faGroup, "FAMethod:", order.faMethod, "CustomerAccount:", order.customerAccount, "ProfessionalCustomer:", order.professionalCustomer, 
-              "BondAccruedInterest:", order.bondAccruedInterest, "IncludeOvernight:", order.includeOvernight, "ExtOperator:", order.extOperator, 
-              "ManualOrderIndicator:", intMaxString(order.manualOrderIndicator), "Submitter:", order.submitter, "ImbalanceOnly:", order.imbalanceOnly, "AlgoStrategy:", order.algoStrategy,
-              "PostOnly:", order.postOnly, "AllowPreOpen:", order.allowPreOpen, "IgnoreOpenAuction:", order.ignoreOpenAuction, "Deactivate:", order.deactivate,
-              "ActiveStartTime:", order.activeStartTime, "ActiveStopTime:", order.activeStopTime, "SeekPriceImprovement:", ("True" if order.seekPriceImprovement else "False"),
-              "WhatIfType:", order.whatIfType, "RouteMarketableToBbo:", ("True" if order.routeMarketableToBbo else "False"))
-
-        self.printTagValueList(order.algoParams, "AlgoParams")
-        self.printComboLegs(contract.comboLegs)
-        self.printOrderComboLegs(order.orderComboLegs)
-        self.printDeltaNeutralContract(contract.deltaNeutralContract)
-        self.printTagValueList(order.smartComboRoutingParams, "SmartComboRoutingParams")
-        self.printConditions(order.conditions)
-        self.printSoftDollarTier(order.softDollarTier)
-        
-        if order.whatIf:
-            print(orderState)
-
-        order.contract = contract
-        self.permId2ord[order.permId] = order
     # ! [openorder]
 
     @iswrapper
     # ! [openorderend]
     def openOrderEnd(self):
         super().openOrderEnd()
-        print("OpenOrderEnd")
-
-        logging.debug("Received %d openOrders", len(self.permId2ord))
     # ! [openorderend]
 
     @iswrapper
@@ -472,13 +448,7 @@ class TestApp(TestWrapper, TestClient):
                     remaining: Decimal, avgFillPrice: float, permId: int,
                     parentId: int, lastFillPrice: float, clientId: int,
                     whyHeld: str, mktCapPrice: float):
-        super().orderStatus(orderId, status, filled, remaining,
-                            avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice)
-        print("OrderStatus. Id:", orderId, "Status:", status, "Filled:", decimalMaxString(filled),
-              "Remaining:", decimalMaxString(remaining), "AvgFillPrice:", floatMaxString(avgFillPrice),
-              "PermId:", longMaxString(permId), "ParentId:", intMaxString(parentId), "LastFillPrice:",
-              floatMaxString(lastFillPrice), "ClientId:", intMaxString(clientId), "WhyHeld:",
-              whyHeld, "MktCapPrice:", floatMaxString(mktCapPrice))
+        super().orderStatus(orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice)
     # ! [orderstatus]
 
 
@@ -889,41 +859,30 @@ class TestApp(TestWrapper, TestClient):
     def tickPrice(self, reqId: TickerId, tickType: TickType, price: float,
                   attrib: TickAttrib):
         super().tickPrice(reqId, tickType, price, attrib)
-        print("TickPrice. TickerId:", reqId, "tickType:", tickType,
-              "Price:", floatMaxString(price), "CanAutoExecute:", attrib.canAutoExecute,
-              "PastLimit:", attrib.pastLimit, end=' ')
-        if tickType == TickTypeEnum.BID or tickType == TickTypeEnum.ASK:
-            print("PreOpen:", attrib.preOpen)
-        else:
-            print()
     # ! [tickprice]
 
     @iswrapper
     # ! [ticksize]
     def tickSize(self, reqId: TickerId, tickType: TickType, size: Decimal):
         super().tickSize(reqId, tickType, size)
-        print("TickSize. TickerId:", reqId, "TickType:", tickType, "Size: ", decimalMaxString(size))
     # ! [ticksize]
 
     @iswrapper
     # ! [tickgeneric]
     def tickGeneric(self, reqId: TickerId, tickType: TickType, value: float):
         super().tickGeneric(reqId, tickType, value)
-        print("TickGeneric. TickerId:", reqId, "TickType:", tickType, "Value:", floatMaxString(value))
     # ! [tickgeneric]
 
     @iswrapper
     # ! [tickstring]
     def tickString(self, reqId: TickerId, tickType: TickType, value: str):
         super().tickString(reqId, tickType, value)
-        print("TickString. TickerId:", reqId, "Type:", tickType, "Value:", value)
     # ! [tickstring]
 
     @iswrapper
     # ! [ticksnapshotend]
     def tickSnapshotEnd(self, reqId: int):
         super().tickSnapshotEnd(reqId)
-        print("TickSnapshotEnd. TickerId:", reqId)
     # ! [ticksnapshotend]
 
     @iswrapper
@@ -1252,12 +1211,6 @@ class TestApp(TestWrapper, TestClient):
                               gamma: float, vega: float, theta: float, undPrice: float):
         super().tickOptionComputation(reqId, tickType, tickAttrib, impliedVol, delta,
                                       optPrice, pvDividend, gamma, vega, theta, undPrice)
-        print("TickOptionComputation. TickerId:", reqId, "TickType:", tickType,
-              "TickAttrib:", intMaxString(tickAttrib),
-              "ImpliedVolatility:", floatMaxString(impliedVol), "Delta:", floatMaxString(delta), "OptionPrice:",
-              floatMaxString(optPrice), "pvDividend:", floatMaxString(pvDividend), "Gamma: ", floatMaxString(gamma), "Vega:", floatMaxString(vega),
-              "Theta:", floatMaxString(theta), "UnderlyingPrice:", floatMaxString(undPrice))
-
     # ! [tickoptioncomputation]
 
 
@@ -1334,17 +1287,14 @@ class TestApp(TestWrapper, TestClient):
 
     @iswrapper
     #! [historicalNews]
-    def historicalNews(self, reqId: int, time: str, providerCode: str,
-                       articleId: str, headline: str):
-        print("HistoricalNews. ReqId:", reqId, "Time:", time,
-              "ProviderCode:", providerCode, "ArticleId:", articleId,
-              "Headline:", headline)
+    def historicalNews(self, reqId: int, time: str, providerCode: str, articleId: str, headline: str):
+        super().historicalNews(reqId, time, providerCode, articleId, headline)
     #! [historicalNews]
 
     @iswrapper
     #! [historicalNewsEnd]
     def historicalNewsEnd(self, reqId:int, hasMore:bool):
-        print("HistoricalNewsEnd. ReqId:", reqId, "HasMore:", hasMore)
+        super().historicalNewsEnd(reqId, hasMore)
     #! [historicalNewsEnd]
 
     @iswrapper
@@ -1485,8 +1435,6 @@ class TestApp(TestWrapper, TestClient):
     def tickReqParams(self, tickerId:int, minTick:float,
                       bboExchange:str, snapshotPermissions:int):
         super().tickReqParams(tickerId, minTick, bboExchange, snapshotPermissions)
-        print("TickReqParams. TickerId:", tickerId, "MinTick:", floatMaxString(minTick),
-              "BboExchange:", bboExchange, "SnapshotPermissions:", intMaxString(snapshotPermissions))
     # ! [tickReqParams]
 
     @iswrapper
@@ -1497,43 +1445,6 @@ class TestApp(TestWrapper, TestClient):
         for desc in depthMktDataDescriptions:
             print("DepthMktDataDescription.", desc)
     # ! [mktDepthExchanges]
-
-    @printWhenExecuting
-    def fundamentalsOperations_req(self):
-        # Requesting Fundamentals
-        # ! [reqfundamentaldata]
-        self.reqFundamentalData(8001, ContractSamples.USStock(), "ReportsFinSummary", [])
-        # ! [reqfundamentaldata]
-        
-        # ! [fundamentalexamples]
-        self.reqFundamentalData(8002, ContractSamples.USStock(), "ReportSnapshot", []) # for company overview
-        self.reqFundamentalData(8003, ContractSamples.USStock(), "ReportRatios", []) # for financial ratios
-        self.reqFundamentalData(8004, ContractSamples.USStock(), "ReportsFinStatements", []) # for financial statements
-        self.reqFundamentalData(8005, ContractSamples.USStock(), "RESC", []) # for analyst estimates
-        self.reqFundamentalData(8006, ContractSamples.USStock(), "CalendarReport", []) # for company calendar
-        # ! [fundamentalexamples]
-
-    @printWhenExecuting
-    def fundamentalsOperations_cancel(self):
-        # Canceling fundamentalsOperations_req request
-        # ! [cancelfundamentaldata]
-        self.cancelFundamentalData(8001)
-        # ! [cancelfundamentaldata]
-
-        # ! [cancelfundamentalexamples]
-        self.cancelFundamentalData(8002)
-        self.cancelFundamentalData(8003)
-        self.cancelFundamentalData(8004)
-        self.cancelFundamentalData(8005)
-        self.cancelFundamentalData(8006)
-        # ! [cancelfundamentalexamples]
-
-    @iswrapper
-    # ! [fundamentaldata]
-    def fundamentalData(self, reqId: TickerId, data: str):
-        super().fundamentalData(reqId, data)
-        print("FundamentalData. ReqId:", reqId, "Data:", data)
-    # ! [fundamentaldata]
 
     @printWhenExecuting
     def bulletinsOperations_req(self):
@@ -1611,7 +1522,7 @@ class TestApp(TestWrapper, TestClient):
         parent.orderId = self.nextOrderId()
         parent.transmit = False
         # Hedge on the currency conversion
-        hedge = OrderSamples.MarketFHedge(parent.orderId, "BUY")
+        hedge = OrderSamples.MarketFxHedge(parent.orderId, "BUY")
         # Place the parent first...
         self.placeOrder(parent.orderId, ContractSamples.EuropeanStock(), parent)
         # Then the hedge order
@@ -1630,6 +1541,11 @@ class TestApp(TestWrapper, TestClient):
         # ! [algo_base_order]
         baseOrder = OrderSamples.LimitOrder("BUY", 1000, 1)
         # ! [algo_base_order]
+
+        # ! [accudistr]
+        AvailableAlgoParams.FillAccuDistrParams(baseOrder, 5, "MKT", 100, "10:00:00", "11:00:00", "EST")
+        self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), baseOrder)
+        # ! [accudistr]
 
         # ! [arrivalpx]
         AvailableAlgoParams.FillArrivalPriceParams(baseOrder, 0.1, "Aggressive", "09:00:00 US/Eastern", "16:00:00 US/Eastern", True, True)
@@ -1652,12 +1568,12 @@ class TestApp(TestWrapper, TestClient):
         # ! [ad]
 
         # ! [twap]
-        AvailableAlgoParams.FillTwapParams(baseOrder, "Marketable", "09:00:00 US/Eastern", "16:00:00 US/Eastern", True)
+        AvailableAlgoParams.FillTwapParams(baseOrder, "10:00:00 US/Eastern", "11:00:00 US/Eastern", True)
         self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), baseOrder)
         # ! [twap]
 
         # ! [vwap]
-        AvailableAlgoParams.FillVwapParams(baseOrder, 0.2, "09:00:00 US/Eastern", "16:00:00 US/Eastern", True, True)
+        AvailableAlgoParams.FillVwapParams(baseOrder, 0.2, "09:00:00 US/Eastern", "16:00:00 US/Eastern", True, True, True)
         self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), baseOrder)
         # ! [vwap]
 
@@ -1677,7 +1593,7 @@ class TestApp(TestWrapper, TestClient):
         # ! [adaptive]
 
         # ! [closepx]
-        AvailableAlgoParams.FillClosePriceParams(baseOrder, 0.4, "Neutral", "20180926-06:06:49", True)
+        AvailableAlgoParams.FillClosePriceParams(baseOrder, 0.5, "Neutral", "12:00:00 US/Eastern", True)
         self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), baseOrder)
         # ! [closepx]
 
@@ -1700,21 +1616,6 @@ class TestApp(TestWrapper, TestClient):
         AvailableAlgoParams.FillTimeVariantPctVolParams(baseOrder, 0.2, 0.4, "12:00:00 US/Eastern", "14:00:00 US/Eastern", True)
         self.placeOrder(self.nextOrderId(), ContractSamples.USStockAtSmart(), baseOrder)
         # ! [pctvoltm]
-
-        # ! [jeff_vwap_algo]
-        AvailableAlgoParams.FillJefferiesVWAPParams(baseOrder, "10:00:00 US/Eastern", "16:00:00 US/Eastern", 10, 10, "Exclude_Both", 130, 135, 1, 10, "Patience", False, "Midpoint")
-        self.placeOrder(self.nextOrderId(), ContractSamples.JefferiesContract(), baseOrder)
-        # ! [jeff_vwap_algo]
-
-        # ! [csfb_inline_algo]
-        AvailableAlgoParams.FillCSFBInlineParams(baseOrder, "10:00:00 US/Eastern", "16:00:00 US/Eastern", "Patient", 10, 20, 100, "Default", False, 40, 100, 100, 35)
-        self.placeOrder(self.nextOrderId(), ContractSamples.CSFBContract(), baseOrder)
-        # ! [csfb_inline_algo]
-
-        # ! [qbalgo_strobe_algo]
-        AvailableAlgoParams.FillQBAlgoInLineParams(baseOrder, "10:00:00 US/Eastern", "16:00:00 US/Eastern", -99, "TWAP", 0.25, True)
-        self.placeOrder(self.nextOrderId(), ContractSamples.QBAlgoContract(), baseOrder)
-        # ! [qbalgo_strobe_algo]
 
     @printWhenExecuting
     def financialAdvisorOperations(self):
@@ -2112,6 +2013,61 @@ class TestApp(TestWrapper, TestClient):
         self.placeOrder(self.nextOrderId(), ContractSamples.IBKRATSContract(), ibkratsOrder)
         # ! [ibkratssubmit]
 
+    def configOperations_req(self):
+        # ! [req_config]
+        configRequestProto = ConfigRequestProto()
+        configRequestProto.reqId = 20001
+        self.reqConfigProtoBuf(configRequestProto)
+        # ! [req_config]
+
+        # ! [update_api_settings_config_request]
+        self.updateConfigProtoBuf(ConfigSamples.UpdateConfigApiSettings(20002));
+        # ! [update_api_settings_config_request]
+
+        # ! [update_orders_config_request]
+        self.updateConfigProtoBuf(ConfigSamples.UpdateOrdersConfig(20003));
+        # ! [update_orders_config_request]
+        
+        # ! [update_message_config_request]
+        self.updateConfigProtoBuf(ConfigSamples.UpdateMessageConfigConfirmMandatoryCapPriceAccepted(20004));
+        # ! [update_message_config_request]
+
+        # ! [update_config_request_order_id_reset]
+        self.updateConfigProtoBuf(ConfigSamples.UpdateConfigOrderIdReset(20005));
+        # ! [update_config_request_order_id_reset]
+
+    def orderParentChildOperations_req(self):
+        # ! [beta_hedge_order]
+        parentOrderId = self.nextOrderId()
+        childOrderId = self.nextOrderId()
+        self.placeOrderProtoBuf(OrderSamplesProto.createPlaceOrderRequest(parentOrderId, ContractSamplesProto.IBMStockAtSmart(), OrderSamplesProto.LimitOrder("BUY", Decimal("100"), 40, False)));
+        time.sleep(1)
+        self.placeOrderProtoBuf(OrderSamplesProto.createPlaceOrderRequest(childOrderId, ContractSamplesProto.MSFTStockAtSmart(), OrderSamplesProto.BetaHedgeOrder(parentOrderId, "SELL", "0.05", 75, True)));
+        # ! [beta_hedge_order]
+
+    def newsOperationsProto_req(self):
+        # ! [request_historical_news_with_end_time]]
+        self.reqHistoricalNewsProtoBuf(NewsSamplesProto.HistoricalNewsRequestWithEndTime(10001));
+        # ! [request_historical_news_with_end_time]]
+        time.sleep(1)
+        #! [request_historical_news_with_start_time]
+        self.reqHistoricalNewsProtoBuf(NewsSamplesProto.HistoricalNewsRequestWithStartTime(10002));
+        #! [request_historical_news_with_start_time]
+
+    def tickDataOperationsProto_req(self):
+        #! [request_odd_lot_bid_ask_quotes]
+        self.reqMarketDataProtoBuf(MarketDataSamplesProto.OddLotBidAskQuotesRequest(20001, ContractSamplesProto.IBMStockAtSmart()))
+        #! [request_odd_lot_bid_ask_quotes]
+        time.sleep(10)
+        #! [cancel_market_data]
+        self.cancelMarketDataProtoBuf(MarketDataSamplesProto.CancelMarketDataRequest(20001))
+        #! [cancel_market_data]
+        time.sleep(1)
+        #! [request_regulatory_snapshot]
+        self.reqMarketDataProtoBuf(MarketDataSamplesProto.RegulatorySnapshotRequest(20002, ContractSamplesProto.IBMStockAtSmart()))
+        #! [request_regulatory_snapshot]
+        time.sleep(10)
+
     @iswrapper
     # ! [execdetails]
     def execDetails(self, reqId: int, contract: Contract, execution: Execution):
@@ -2145,23 +2101,12 @@ class TestApp(TestWrapper, TestClient):
     def completedOrder(self, contract: Contract, order: Order,
                   orderState: OrderState):
         super().completedOrder(contract, order, orderState)
-        print("CompletedOrder. PermId:", longMaxString(order.permId), "ParentPermId:", longMaxString(order.parentPermId), "Account:", order.account, 
-              "Symbol:", contract.symbol, "SecType:", contract.secType, "Exchange:", contract.exchange, 
-              "Action:", order.action, "OrderType:", order.orderType, "TotalQty:", decimalMaxString(order.totalQuantity), 
-              "CashQty:", floatMaxString(order.cashQty), "FilledQty:", decimalMaxString(order.filledQuantity), 
-              "LmtPrice:", floatMaxString(order.lmtPrice), "AuxPrice:", floatMaxString(order.auxPrice), "Status:", orderState.status,
-              "Completed time:", orderState.completedTime, "Completed Status:" + orderState.completedStatus,
-              "MinTradeQty:", intMaxString(order.minTradeQty), "MinCompeteSize:", intMaxString(order.minCompeteSize),
-              "competeAgainstBestOffset:", "UpToMid" if order.competeAgainstBestOffset == COMPETE_AGAINST_BEST_OFFSET_UP_TO_MID else floatMaxString(order.competeAgainstBestOffset),
-              "MidOffsetAtWhole:", floatMaxString(order.midOffsetAtWhole),"MidOffsetAtHalf:" ,floatMaxString(order.midOffsetAtHalf), "CustomerAccount:", order.customerAccount,
-              "ProfessionalCustomer:", order.professionalCustomer, "Submitter:", order.submitter, "ImbalanceOnly:", order.imbalanceOnly)
     # ! [completedorder]
 
     @iswrapper
     # ! [completedordersend]
     def completedOrdersEnd(self):
         super().completedOrdersEnd()
-        print("CompletedOrdersEnd")
     # ! [completedordersend]
 
     @iswrapper
@@ -2209,61 +2154,28 @@ class TestApp(TestWrapper, TestClient):
         print("CurrentTimeInMillis:", timeInMillis, "-", getTimeStrFromMillis(timeInMillis))
     # ! [currenttimeinmillis]
 
-    def printTagValueList(self, tagValueList: list[TagValue], listName: str):
-        if tagValueList is not None and tagValueList: 
-            print("\t", listName, "{", end=" ")
-            for tagValue in tagValueList: 
-                print(tagValue.tag, "=", tagValue.value, end=" ")
-            print("}")
-
-    def printConditions(self, conditions: list[OrderCondition]):
-        if conditions is not None and conditions: 
-            print("\tConditions: {", end=" ")
-            for condition in conditions: 
-                print(condition, ";", end=" ")
-            print("}")
-
-    def printSoftDollarTier(self, softDollarTier: SoftDollarTier):
-        print("\tSoftDollarTier: {name:", softDollarTier.name, "val:", softDollarTier.val, "displayName:", softDollarTier.displayName, "}");
-        
-    def printDeltaNeutralContract(self, deltaNeutralContract: DeltaNeutralContract):
-        if deltaNeutralContract is not None:
-            print("\tDeltaNeutralContract: {conid:", intMaxString(deltaNeutralContract.conId), "delta:", floatMaxString(deltaNeutralContract.delta), "price:" + floatMaxString(deltaNeutralContract.price), "}");
-
-    def printComboLegs(self, comboLegList: list[ComboLeg]):
-        if comboLegList is not None and comboLegList:
-            print("\tComboLegs:{", end=" ");
-            for comboLeg in comboLegList: 
-                print("conId: ", intMaxString(comboLeg.conId), "action: ", comboLeg.action, "ratio: ", intMaxString(comboLeg.ratio), "exchange: " + comboLeg.exchange, ";", end=" ");
-            print("}");
-
-    def printOrderComboLegs(self, orderComboLegList: list[OrderComboLeg]):
-        if orderComboLegList is not None and orderComboLegList:
-            print("\tOrderComboLegs:{", end=" ");
-            for orderComboLeg in orderComboLegList: 
-                print("price: ", floatMaxString(orderComboLeg.price), ";", end=" ");
-            print("}");
-
     # Protobuf
     @iswrapper
     # ! [orderstatus_protobuf]
     def orderStatusProtoBuf(self, orderStatusProto: OrderStatusProto):
         super().orderStatusProtoBuf(orderStatusProto)
-        print("OrderStatusProtoBuf")
+        printProtoSingleLine("OrderStatus:", orderStatusProto)
     # ! [orderstatus_protobuf]
 
     # ! [openorder_protobuf]
     @iswrapper
     def openOrderProtoBuf(self, openOrderProto: OpenOrderProto):
         super().openOrderProtoBuf(openOrderProto)
-        print("OpenOrderProtoBuf")
+        printProtoSingleLine("OpenOrder:", openOrderProto)
+        self.permId2ord[openOrderProto.order.permId] = openOrderProto.order
     # ! [openorder_protobuf]
 
     # ! [openordersend_protobuf]
     @iswrapper
     def openOrdersEndProtoBuf(self, openOrdersEndProto: OpenOrdersEndProto):
         super().openOrdersEndProtoBuf(openOrdersEndProto)
-        print("OpenOrdersEndProtoBuf")
+        printProtoSingleLine("OpenOrdersEnd:", openOrdersEndProto)
+        logging.debug("Received %d openOrders", len(self.permId2ord))
     # ! [openordersend_protobuf]
 
     # ! [errormessage_protobuf]
@@ -2291,14 +2203,14 @@ class TestApp(TestWrapper, TestClient):
     @iswrapper
     def completedOrderProtoBuf(self, completedOrderProto: CompletedOrderProto):
         super().completedOrderProtoBuf(completedOrderProto)
-        print("CompletedOrderProtoBuf")
+        printProtoSingleLine("CompletedOrder:", completedOrderProto)
     # ! [completedorder_protobuf]
 
     # ! [completedordersend_protobuf]
     @iswrapper
     def completedOrdersEndProtoBuf(self, completedOrdersEndProto: CompletedOrdersEndProto):
         super().completedOrdersEndProtoBuf(completedOrdersEndProto)
-        print("CompletedOrdersEndProtoBuf")
+        printProtoSingleLine("CompletedOrdersEnd:", completedOrdersEndProto)
     # ! [completedordersend_protobuf]
 
     # ! [orderbound_protobuf]
@@ -2333,42 +2245,42 @@ class TestApp(TestWrapper, TestClient):
     @iswrapper
     def tickPriceProtoBuf(self, tickPriceProto: TickPriceProto):
         super().tickPriceProtoBuf(tickPriceProto)
-        print("TickPriceProtoBuf")
+        printProtoSingleLine("TickPrice:", tickPriceProto)
     # ! [tickprice_protobuf]
 
     # ! [ticksize_protobuf]
     @iswrapper
     def tickSizeProtoBuf(self, tickSizeProto: TickSizeProto):
         super().tickSizeProtoBuf(tickSizeProto)
-        print("TickSizeProtoBuf")
+        printProtoSingleLine("TickSize:", tickSizeProto)
     # ! [ticksize_protobuf]
 
     # ! [tickoptioncomputation_protobuf]
     @iswrapper
     def tickOptionComputationProtoBuf(self, tickOptionComputationProto: TickOptionComputationProto):
         super().tickOptionComputationProtoBuf(tickOptionComputationProto)
-        print("TickOptionComputationProtoBuf")
+        printProtoSingleLine("TickOptionComputation:", tickOptionComputationProto)
     # ! [tickoptioncomputation_protobuf]
 
     # ! [tickgeneric_protobuf]
     @iswrapper
     def tickGenericProtoBuf(self, tickGenericProto: TickGenericProto):
         super().tickGenericProtoBuf(tickGenericProto)
-        print("TickGenericProtoBuf")
+        printProtoSingleLine("TickGeneric:", tickGenericProto)
     # ! [tickgeneric_protobuf]
 
     # ! [tickstring_protobuf]
     @iswrapper
     def tickStringProtoBuf(self, tickStringProto: TickStringProto):
         super().tickStringProtoBuf(tickStringProto)
-        print("TickStringProtoBuf")
+        printProtoSingleLine("TickString:", tickStringProto)
     # ! [tickstring_protobuf]
 
     # ! [ticksnapshotend_protobuf]
     @iswrapper
     def tickSnapshotEndProtoBuf(self, tickSnapshotEndProto: TickSnapshotEndProto):
         super().tickSnapshotEndProtoBuf(tickSnapshotEndProto)
-        print("TickSnapshotEndProtoBuf")
+        printProtoSingleLine("TickSnapshotEnd:", tickSnapshotEndProto)
     # ! [ticksnapshotend_protobuf]
 
     # ! [updatemarketdepth_protobuf]
@@ -2396,7 +2308,16 @@ class TestApp(TestWrapper, TestClient):
     @iswrapper
     def tickReqParamsProtoBuf(self, tickReqParamsProto: TickReqParamsProto):
         super().tickReqParamsProtoBuf(tickReqParamsProto)
-        print("TickReqParamsProtoBuf")
+        parts = [
+            f"TickerId: {tickReqParamsProto.reqId}" if tickReqParamsProto.HasField('reqId') else None,
+            f"MinTick: {tickReqParamsProto.minTick}" if tickReqParamsProto.HasField('minTick') else None,
+            f"BboExchange: {tickReqParamsProto.bboExchange}" if tickReqParamsProto.HasField('bboExchange') else None,
+            f"SnapshotPermissions: {tickReqParamsProto.snapshotPermissions}" if tickReqParamsProto.HasField('snapshotPermissions') else None,
+            f"LastPricePrecision: {tickReqParamsProto.lastPricePrecision}" if tickReqParamsProto.HasField('lastPricePrecision') else None,
+            f"LastSizePrecision: {tickReqParamsProto.lastSizePrecision}" if tickReqParamsProto.HasField('lastSizePrecision') else None,
+        ]
+        tickReqParamsStr = " ".join(filter(None, parts))
+        print("TickReqParams.", tickReqParamsStr)
     # ! [tickreqparams_protobuf]
 
     # ! [updateaccountvalue_protobuf]
@@ -2585,14 +2506,14 @@ class TestApp(TestWrapper, TestClient):
     @iswrapper
     def historicalNewsProtoBuf(self, historicalNewsProto: HistoricalNewsProto):
         super().historicalNewsProtoBuf(historicalNewsProto)
-        print("HistoricalNewsProtoBuf")
+        printProtoSingleLine("HistoricalNews:", historicalNewsProto)
     # ! [historicalnews_protobuf]
 
     # ! [historicalnewsend_protobuf]
     @iswrapper
     def historicalNewsEndProtoBuf(self, historicalNewsEndProto: HistoricalNewsEndProto):
         super().historicalNewsEndProtoBuf(historicalNewsEndProto)
-        print("HistoricalNewsEndProtoBuf")
+        printProtoSingleLine("HistoricalNewsEnd:", historicalNewsEndProto)
     # ! [historicalnewsend_protobuf]
 
     # ! [wshmetadata_protobuf]
@@ -2629,13 +2550,6 @@ class TestApp(TestWrapper, TestClient):
         super().scannerDataProtoBuf(scannerDataProto)
         print("ScannerDataProtoBuf")
     # ! [scannerdata_protobuf]
-
-    # ! [fundamentalsdata_protobuf]
-    @iswrapper
-    def fundamentalsDataProtoBuf(self, fundamentalsDataProto: FundamentalsDataProto):
-        super().fundamentalsDataProtoBuf(fundamentalsDataProto)
-        print("FundamentalsDataProtoBuf")
-    # ! [fundamentalsdata_protobuf]
 
     # ! [pnl_protobuf]
     @iswrapper
@@ -2804,6 +2718,24 @@ class TestApp(TestWrapper, TestClient):
         super().marketDepthExchangesProtoBuf(marketDepthExchangesProto)
         print("MarketDepthExchangesProtoBuf")
     # ! [marketdepthexchanges_protobuf]
+
+    # ! [config_response_protobuf]
+    @iswrapper
+    def configResponseProtoBuf(self, configResponseProto: ConfigResponseProto):
+        super().configResponseProtoBuf(configResponseProto)
+        print("==== Config Response Begin ====")
+        print(configResponseProto)
+        print("==== Config Response End ====")
+    # ! [config_response_protobuf]
+
+    # ! [update_config_response_protobuf]
+    @iswrapper
+    def updateConfigResponseProtoBuf(self, updateConfigResponseProto: UpdateConfigResponseProto):
+        super().updateConfigResponseProtoBuf(updateConfigResponseProto)
+        print("==== Update Config Response Begin ====")
+        print(updateConfigResponseProto)
+        print("==== Update Config Response End ====")
+    # ! [update_config_response_protobuf]
 
 def main():
     SetupLogger()

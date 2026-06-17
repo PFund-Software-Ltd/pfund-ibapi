@@ -1,5 +1,5 @@
 """
-Copyright (C) 2025 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
+Copyright (C) 2026 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
  and conditions of the IB API Non-Commercial License or the IB API Commercial License, as applicable.
 """
 
@@ -158,6 +158,7 @@ class OrderSamples:
         order.orderType = "MIDPRICE"
         order.totalQuantity = quantity
         order.lmtPrice = priceCap # optional
+        order.tif = "DAY"
         #! [midprice]
         return order
 
@@ -231,6 +232,7 @@ class OrderSamples:
         order.totalQuantity = quantity
         order.lmtPrice = priceCap
         order.auxPrice = offsetAmount
+        order.tif = "DAY"
         #! [relative_pegged_primary]
         return order
     
@@ -896,7 +898,7 @@ class OrderSamples:
 
     #! [fhedge]
     @staticmethod
-    def MarketFHedge(parentOrderId:int, action:str):
+    def MarketFxHedge(parentOrderId:int, action:str):
     
         #FX Hedge orders can only have a quantity of 0
         order = OrderSamples.MarketOrder(action, 0)

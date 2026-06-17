@@ -1,5 +1,5 @@
 """
-Copyright (C) 2019 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
+Copyright (C) 2026 Interactive Brokers LLC. All rights reserved. This code is subject to the terms
  and conditions of the IB API Non-Commercial License or the IB API Commercial License, as applicable.
 """
 
@@ -84,11 +84,10 @@ class AvailableAlgoParams(Object):
 
     # ! [twap_params]
     @staticmethod
-    def FillTwapParams(baseOrder: Order, strategyType: str, startTime: str,
+    def FillTwapParams(baseOrder: Order, startTime: str,
                        endTime: str, allowPastEndTime: bool):
         baseOrder.algoStrategy = "Twap"
         baseOrder.algoParams = []
-        baseOrder.algoParams.append(TagValue("strategyType", strategyType))
         baseOrder.algoParams.append(TagValue("startTime", startTime))
         baseOrder.algoParams.append(TagValue("endTime", endTime))
         baseOrder.algoParams.append(TagValue("allowPastEndTime",
@@ -100,7 +99,8 @@ class AvailableAlgoParams(Object):
     # ! [vwap_params]
     @staticmethod
     def FillVwapParams(baseOrder: Order, maxPctVol: float, startTime: str,
-                       endTime: str, allowPastEndTime: bool, noTakeLiq: bool):
+                       endTime: str, allowPastEndTime: bool, noTakeLiq: bool,
+                       speedUp: bool):
         baseOrder.algoStrategy = "Vwap"
         baseOrder.algoParams = []
         baseOrder.algoParams.append(TagValue("maxPctVol", maxPctVol))
@@ -109,6 +109,7 @@ class AvailableAlgoParams(Object):
         baseOrder.algoParams.append(TagValue("allowPastEndTime",
                                              int(allowPastEndTime)))
         baseOrder.algoParams.append(TagValue("noTakeLiq", int(noTakeLiq)))
+        baseOrder.algoParams.append(TagValue("speedUp", int(speedUp)))
 
 
     # ! [vwap_params]
@@ -159,6 +160,24 @@ class AvailableAlgoParams(Object):
         baseOrder.algoParams.append(TagValue("maxPctVol", maxPctVol))
 
     # ! [minimpact_params]
+
+
+    # ! [accudistr_params]
+    @staticmethod
+    def FillAccuDistrParams(baseOrder: Order, timeBetweenOrders: int,
+                            routeOrderType: str, componentSize: int,
+                            activeTimeStart: str, activeTimeEnd: str,
+                            activeTimeTz: str):
+        baseOrder.algoStrategy = "AccuDistr"
+        baseOrder.algoParams = []
+        baseOrder.algoParams.append(TagValue("timeBetweenOrders", timeBetweenOrders))
+        baseOrder.algoParams.append(TagValue("routeOrderType", routeOrderType))
+        baseOrder.algoParams.append(TagValue("componentSize", componentSize))
+        baseOrder.algoParams.append(TagValue("activeTimeStart", activeTimeStart))
+        baseOrder.algoParams.append(TagValue("activeTimeEnd", activeTimeEnd))
+        baseOrder.algoParams.append(TagValue("activeTimeTz", activeTimeTz))
+
+    # ! [accudistr_params]
 
 
     # ! [adaptive_params]
@@ -236,75 +255,6 @@ class AvailableAlgoParams(Object):
         baseOrder.algoParams.append(TagValue("noTakeLiq", int(noTakeLiq)))
 
     # ! [pctvoltm_params]
-
-    # ! [jefferies_vwap_params]
-    @staticmethod
-    def FillJefferiesVWAPParams(baseOrder: Order, startTime: str,
-                                endTime: str, relativeLimit: float,
-                                maxVolumeRate: float, excludeAuctions: str,
-                                triggerPrice: float, wowPrice: float,
-                                minFillSize: int, wowOrderPct: float,
-                                wowMode: str, isBuyBack: bool, wowReference: str):
-        # must be direct-routed to "JEFFALGO"
-        baseOrder.algoStrategy = "VWAP"
-        baseOrder.algoParams = []
-        baseOrder.algoParams.append(TagValue("StartTime", startTime))
-        baseOrder.algoParams.append(TagValue("EndTime", endTime))
-        baseOrder.algoParams.append(TagValue("RelativeLimit", relativeLimit))
-        baseOrder.algoParams.append(TagValue("MaxVolumeRate", maxVolumeRate))
-        baseOrder.algoParams.append(TagValue("ExcludeAuctions", excludeAuctions))
-        baseOrder.algoParams.append(TagValue("TriggerPrice", triggerPrice))
-        baseOrder.algoParams.append(TagValue("WowPrice", wowPrice))
-        baseOrder.algoParams.append(TagValue("MinFillSize", minFillSize))
-        baseOrder.algoParams.append(TagValue("WowOrderPct", wowOrderPct))
-        baseOrder.algoParams.append(TagValue("WowMode", wowMode))
-        baseOrder.algoParams.append(TagValue("IsBuyBack", int(isBuyBack)))
-        baseOrder.algoParams.append(TagValue("WowReference", wowReference))
-    # ! [jefferies_vwap_params]
-
-    # ! [csfb_inline_params]
-    @staticmethod
-    def FillCSFBInlineParams(baseOrder: Order, startTime: str,
-                             endTime: str, execStyle: str,
-                             minPercent: int, maxPercent: int,
-                             displaySize: int, auction: str,
-                             blockFinder: bool, blockPrice: float,
-                             minBlockSize: int, maxBlockSize: int, iWouldPrice: float):
-        # must be direct-routed to "CSFBALGO"
-        baseOrder.algoStrategy = "INLINE"
-        baseOrder.algoParams = []
-        baseOrder.algoParams.append(TagValue("StartTime", startTime))
-        baseOrder.algoParams.append(TagValue("EndTime", endTime))
-        baseOrder.algoParams.append(TagValue("ExecStyle", execStyle))
-        baseOrder.algoParams.append(TagValue("MinPercent", minPercent))
-        baseOrder.algoParams.append(TagValue("MaxPercent", maxPercent))
-        baseOrder.algoParams.append(TagValue("DisplaySize", displaySize))
-        baseOrder.algoParams.append(TagValue("Auction", auction))
-        baseOrder.algoParams.append(TagValue("BlockFinder", int(blockFinder)))
-        baseOrder.algoParams.append(TagValue("BlockPrice", blockPrice))
-        baseOrder.algoParams.append(TagValue("MinBlockSize", minBlockSize))
-        baseOrder.algoParams.append(TagValue("MaxBlockSize", maxBlockSize))
-        baseOrder.algoParams.append(TagValue("IWouldPrice", iWouldPrice))
-    # ! [csfb_inline_params]
-
-    # ! [qbalgo_strobe_params]
-    @staticmethod
-    def FillQBAlgoInLineParams(baseOrder: Order, startTime: str, 
-                               endTime: str, duration: float, 
-                               benchmark: str, percentVolume: float, 
-                               noCleanUp: bool):
-        # must be direct-routed to "QBALGO"
-        baseOrder.algoStrategy = "STROBE"
-        baseOrder.algoParams = []
-        baseOrder.algoParams.append(TagValue("StartTime", startTime))
-        baseOrder.algoParams.append(TagValue("EndTime", endTime))
-        #This example uses endTime instead of duration
-        #baseOrder.algoParams.append(TagValue("Duration", str(duration)))
-        baseOrder.algoParams.append(TagValue("Benchmark", benchmark)) 
-        baseOrder.algoParams.append(TagValue("PercentVolume", str(percentVolume)))
-        baseOrder.algoParams.append(TagValue("NoCleanUp", int(noCleanUp)))
-    # ! [qbalgo_strobe_params]
-
 
 def Test():
     av = AvailableAlgoParams() # @UnusedVariable
