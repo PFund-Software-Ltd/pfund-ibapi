@@ -1,0 +1,190 @@
+name: Release to PyPI and GitHub
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # daily at 00:00 UTC — checks IB for a new version; no-ops if none
+  workflow_dispatch:        # manual "Run workflow" button, for testing / on-demand
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC token for PyPI Trusted Publishing
+      contents: write   # create the GitHub release / push the version bump
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Detect latest IB TWS API (Mac/Unix) version
+        id: detect
+        run: |
+          set -euo pipefail
+
+          response="$(curl -fsSL https://interactivebrokers.github.io)"
+
+          # Latest Mac/Unix zip: the macunix link whose line is also marked "Latest"
+          # (we track IB's Latest channel by choice). grep exits non-zero — and with
+          # `set -e` fails the step — if the link is missing or the page changes.
+          path="$(printf '%s' "$response" \
+            | grep -oP 'interactivebrokers.*twsapi_macunix.*zip(?=.*Latest)')"
+
+          file_url="https://${path}"
+          file_name="$(basename "$path")"                                # twsapi_macunix.1047.01.zip
+          raw_version="$(echo "$file_name" | grep -oP '[0-9]+\.[0-9]+')" # 1047.01
+
+          # IB build number -> PEP 440 version: 1047.01 -> 10.47.1
+          # (last two digits of the build are the minor, so this also works for 9.x).
+          build="${raw_version%.*}"           # 1047
+          micro="${raw_version#*.}"           # 01
+          minor="$((10#${build: -2}))"        # 47   (10# strips a leading zero, e.g. 1101 -> 1)
+          version="${build%??}.${minor}.$((10#$micro))"   # 10.47.1
+
+          { echo "version=$version"; echo "file_url=$file_url"; echo "file_name=$file_name"; } >> "$GITHUB_OUTPUT"
+          echo "Detected $file_name -> $version"
+
+      - name: Skip if this version is already on PyPI
+        id: check
+        run: |
+          set -euo pipefail
+          version="${{ steps.detect.outputs.version }}"
+
+          # curl -f fails on 404, so success means the version already exists on PyPI.
+          if curl -sf "https://pypi.org/pypi/pfund-ibapi/$version/json" >/dev/null; then
+            proceed=false; echo "pfund-ibapi $version is already on PyPI — nothing to do."
+          else
+            proceed=true;  echo "pfund-ibapi $version is new — proceeding."
+          fi
+
+          echo "proceed=$proceed" >> "$GITHUB_OUTPUT"
+
+      - name: Download IB TWS API zip
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          zip="/tmp/${{ steps.detect.outputs.file_name }}"
+
+          curl -fsSL "${{ steps.detect.outputs.file_url }}" --output "$zip"
+
+          # Sanity-check: it must be a real zip that contains the Python client.
+          unzip -l "$zip" | grep -q 'source/pythonclient/ibapi/__init__.py' \
+            || { echo "::error::Downloaded zip is missing the Python client"; exit 1; }
+
+          ls -la "$zip"
+
+      - name: Resolve and validate the release version
+        id: version
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          zip="/tmp/${{ steps.detect.outputs.file_name }}"
+
+          # Read IB's authoritative __version__ straight from the zip (just the one
+          # file, no full extract). runpy executes ibapi/__init__.py so we get the
+          # EXACT string IB's own get_version_string() produces, suffix and all.
+          unzip -p "$zip" 'IBJts/source/pythonclient/ibapi/__init__.py' > /tmp/ib_init.py
+          new_version="$(python3 -c "import runpy; print(runpy.run_path('/tmp/ib_init.py')['__version__'])")"
+
+          # Only ship a plain X.Y.Z FINAL release. Reject "1a", "rc1", extra segments,
+          # or empty — anything PyPI would normalize or hide (e.g. "10.47.1a" is a
+          # pre-release that `pip install` skips by default). Fail loud -> handle by hand.
+          echo "$new_version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::IB version '$new_version' is not a plain X.Y.Z final release — refusing to release"; exit 1; }
+
+          # The authoritative version (what we publish) must match what detect derived from
+          # the filename (what the PyPI skip-check queried) — else we'd check the wrong version.
+          [ "$new_version" = "${{ steps.detect.outputs.version }}" ] \
+            || { echo "::error::version mismatch: zip=$new_version detect=${{ steps.detect.outputs.version }}"; exit 1; }
+
+          echo "version=$new_version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $new_version"
+
+      - name: Stage IB sources into the repo
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          zip="/tmp/${{ steps.detect.outputs.file_name }}"
+          src="/tmp/ibapi_extracted"
+
+          rm -rf "$src"
+          unzip -q "$zip" -d "$src"
+          pc="$src/IBJts/source/pythonclient"
+
+          # 1. ibapi/ package — mirror exactly so files IB *removed* also disappear.
+          rsync -a --delete "$pc/ibapi/" ibapi/
+
+          # 2. standalone config files shipped alongside the package.
+          cp "$pc/MANIFEST.in" MANIFEST.in
+          cp "$pc/pylintrc"    pylintrc
+          cp "$pc/tox.ini"     tox.ini
+
+          # 3. IB's setup.py is kept only as a backup reference (we build via pyproject.toml).
+          cp "$pc/setup.py" setup.py.bk
+
+          # 4. IB's test suite -> tests/, but DON'T disturb our tests/Testbed (handled next).
+          rsync -a --delete --exclude 'Testbed/' "$pc/tests/" tests/
+
+          # 5. Python sample app -> tests/Testbed (mirror exactly).
+          rsync -a --delete "$src/IBJts/samples/Python/Testbed/" tests/Testbed/
+
+          # 6. README.md: keep OUR header (everything through the first '---' line),
+          #    then refresh IB's original README below it from the new zip.
+          grep -qx -- '---' README.md \
+            || { echo "::error::README.md: no '---' separator found — cannot locate where IB's section begins"; exit 1; }
+          awk '{print} /^---$/{exit}' README.md > /tmp/readme.head
+          { cat /tmp/readme.head; echo; cat "$pc/README.md"; echo; } > README.md
+
+          echo "Working tree after staging IB sources:"
+          git status --short
+
+      - name: Bump pyproject.toml version
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          ver="${{ steps.version.outputs.version }}"
+          sed -i -E 's/^version = "[^"]*"/version = "'"$ver"'"/' pyproject.toml
+          grep -nE '^version = ' pyproject.toml
+
+      - name: Install uv
+        if: steps.check.outputs.proceed == 'true'
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Build the wheel and sdist
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          rm -rf dist            # drop any stale artifacts so only this version is published
+          uv build
+          ls -la dist
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.proceed == 'true'
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+
+      - name: Commit the updated sources back to main
+        if: steps.check.outputs.proceed == 'true'
+        run: |
+          set -euo pipefail
+          ver="${{ steps.version.outputs.version }}"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage only IB's sources + our version/readme — never build artifacts (dist/).
+          git add -A ibapi tests pyproject.toml README.md MANIFEST.in pylintrc tox.ini setup.py.bk
+
+          git commit -m "Upgrade to IB TWS API $ver"
+          git push origin HEAD:main
+
+      - name: Create GitHub release and attach the IB zip
+        if: steps.check.outputs.proceed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ver="${{ steps.version.outputs.version }}"
+          zip="/tmp/${{ steps.detect.outputs.file_name }}"
+
+          gh release create "v$ver" \
+            --title "pfund-ibapi $ver" \
+            --notes "Repackaged Interactive Brokers TWS API $ver. The attached zip is the original IB Mac/Unix download this release was built from." \
+            "$zip"

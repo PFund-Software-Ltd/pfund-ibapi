@@ -11,12 +11,9 @@ pip install pfund-ibapi
 ## Documentation
 https://www.interactivebrokers.com/campus/ibkr-api-page/twsapi-doc/
 
----
-### TODO:
-- set up CI/CD pipeline to download IBKR TWS API, build and publish to PyPI.
-- attach original zip file to the release.
----
 Below is the original README.md from the IBKR TWS API solely for reference.
+
+---
 
 **Installation Guide for TWS API Library**
 
@@ -190,4 +187,4 @@ Implementation notes:
 
     + other messages are more complex, depend on version number heavily or need field massaging. In this case the incoming message id is mapped to a processing function that will do all that and call the Wrapper method at the end. For example:
 
-    IN.TICK_PRICE: HandleInfo(proc=processTickPriceMsg), 
+    IN.TICK_PRICE: HandleInfo(proc=processTickPriceMsg),
