@@ -1,6 +1,6 @@
 [project]
 name = "pfund-ibapi"
-version = "10.47.1"
+version = "10.48.1"
 description = "Interactive Brokers TWS Python API repackaged for easy install"
 license = { file = "LICENSE" }
 authors = [
