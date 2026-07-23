@@ -19,8 +19,11 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.11.21,<0.12.0"]
+requires = ["uv_build>=0.11.31,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+exclude-newer = "14 days"
 
 [tool.uv.build-backend]
 module-name = "ibapi"
